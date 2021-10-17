@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 type Article struct {
-	Id      string `json:"id"`
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Desc    string `json:"desc"`
 	Content string `json:"content"`
@@ -21,8 +22,8 @@ var Articles []Article
 func main() {
 	// database data
 	Articles = []Article{
-		{Id: "1", Title: "Model Predictive Control", Desc: "MPC Book", Content: "Model predictive control"},
-		{Id: "2", Title: "Convex Optimization", Desc: "CVX Book", Content: "Numerical algorithms for convex optimization problems"},
+		{Id: 1, Title: "Model Predictive Control", Desc: "MPC Book", Content: "Model predictive control"},
+		{Id: 2, Title: "Convex Optimization", Desc: "CVX Book", Content: "Numerical algorithms for convex optimization problems"},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
@@ -35,8 +36,7 @@ func main() {
 	}).Methods("GET")
 	router.HandleFunc("/articles/{id}/", func(rw http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		// id, _ := strconv.ParseInt(vars["id"], 10, 64)
-		id := vars["id"]
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
 
 		for _, article := range Articles {
 			if article.Id == id {
@@ -44,10 +44,10 @@ func main() {
 			}
 		}
 
-	})
+	}).Methods("GET")
 	router.HandleFunc("/articles/", func(rw http.ResponseWriter, r *http.Request) {
 		reqBody, _ := ioutil.ReadAll(r.Body)
-		
+
 		var newArticle Article
 
 		json.Unmarshal(reqBody, &newArticle)
@@ -56,6 +56,16 @@ func main() {
 		json.NewEncoder(rw).Encode(newArticle)
 
 	}).Methods("POST")
+
+	router.HandleFunc("/articles/{id}/", func(rw http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+		for index, v := range Articles {
+			if v.Id == id {
+				Articles = append(Articles[:index], Articles[index + 1:]...)
+			}
+		}
+	}).Methods("DELETE")
 
 	fmt.Println("Listening on port 8080 ...")
 	http.ListenAndServe("0.0.0.0:8080", router)
