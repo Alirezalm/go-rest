@@ -66,7 +66,23 @@ func main() {
 			}
 		}
 	}).Methods("DELETE")
+	
+	router.HandleFunc("/articles/{id}/", func(rw http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, _ := strconv.ParseInt(vars["id"], 10, 64)
+		
+		reqBody, _ := ioutil.ReadAll(r.Body)
 
+		var newArticle Article
+
+		json.Unmarshal(reqBody, &newArticle)
+
+		for index, v := range Articles {
+			if v.Id == id {
+				Articles[index] = newArticle
+			}
+		}
+	}).Methods("PUT")
 	fmt.Println("Listening on port 8080 ...")
 	http.ListenAndServe("0.0.0.0:8080", router)
 }
